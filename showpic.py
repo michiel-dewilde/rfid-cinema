@@ -34,10 +34,13 @@ def readImage(path):
         image = image.rotate(270, expand=True)
     elif orientation == 8:
         image = image.rotate(90, expand=True)
-    hratio = root.winfo_screenwidth()/float(image.width)
-    vratio = root.winfo_screenheight()/float(image.height)
-    ratio = min(hratio, vratio)
-    image = image.resize((int(round(ratio*image.width)), int(round(ratio*image.height))), Image.LANCZOS)
+    swidth = root.winfo_screenwidth()
+    sheight = root.winfo_screenheight()
+    if (image.width != swidth or image.height > sheight) and (image.height != sheight or image.width > swidth):
+        hratio = swidth/float(image.width)
+        vratio = sheight/float(image.height)
+        ratio = min(hratio, vratio)
+        image = image.resize((int(round(ratio*image.width)), int(round(ratio*image.height))), Image.LANCZOS)
     return image
 
 def showImage():
