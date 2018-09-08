@@ -1,9 +1,10 @@
 import os, signal, subprocess, time
+from monotonic import monotonic
 from PIL import ImageTk, Image
 import RPi.GPIO as GPIO
 from MFRC522 import MFRC522
 from repoze.lru import lru_cache
-from Tkinter import Tk, Label
+from Tkinter import Tk, Label, LEFT, StringVar
 
 global MIFAREReader
 MIFAREReader = MFRC522()
@@ -15,16 +16,18 @@ def readTag():
     (status,uid) = MIFAREReader.MFRC522_Anticoll()
     if status != MIFAREReader.MI_OK:
         return None
-    return ''.join([format(i,'02X') for i in uid])
+    return ''.join([format(i,'02X') for i in uid[0:4]])
 
 root = Tk()
 root.attributes('-fullscreen', True)
-root.configure(background='black', cursor='none')
+root.configure(bg='black', cursor='none')
 
+helpTagLabel = None
 videoPlayer = None
 
 def clear():
-    global videoPlayer
+    global helpTagLabel, videoPlayer
+    helpTagLabel = None
     if videoPlayer is not None:
         os.killpg(os.getpgid(videoPlayer.pid), signal.SIGTERM)
         videoPlayer = None
@@ -60,17 +63,20 @@ def showImage(path):
     clear()
     image = readImage(path)
     photoImage = ImageTk.PhotoImage(image)
-    label = Label(root, image = photoImage)
+    label = Label(root, image = photoImage, bg = 'black')
     label.image = photoImage
-    label.configure(background='black')
-    label.pack(side = 'bottom', fill = 'both', expand = 'yes')
+    label.pack(fill = 'both', expand = 'yes')
 
-def showText(text):
-    clear()
-    label = Label(root, text = text)
-    label.configure(background='black')
-    label.pack(side = 'bottom', fill = 'both', expand = 'yes')
-    
+def showHelpWithTag(tagId = '', tagPresent = False):
+    global helpTagLabel
+    if not helpTagLabel:
+        clear()
+        label = Label(root, text = 'help message', fg = 'white', bg = 'black', font=('Helvetica', 20), justify=LEFT)
+        label.pack(side = 'top', fill = 'both', expand = 'yes')
+        helpTagLabel = Label(root, text = '', bg='black', font=("Helvetica", 200))
+        helpTagLabel.pack(side = 'top', fill = 'both', expand = 'no')
+    helpTagLabel.configure(text=tagId, fg=('green' if tagPresent else 'red'))
+        
 devnull = open(os.devnull, 'w')
 def showVideo(path, loop=False):
     global videoPlayer
@@ -88,7 +94,8 @@ def cleanup():
 
 def poll():
     root.after(100, poll)
-    print readTag()
+    tag = readTag()
+    showHelpWithTag(tag if tag else 'no tag', bool(tag));
     root.update_idletasks()
 
 root.bind('i', lambda e: showImage('/media/usb0/IMG_0681.JPG'))
@@ -97,6 +104,5 @@ root.bind('c', lambda e: clear())
 root.bind('<Escape>',lambda e: cleanup())
 
 poll()
-showText("hello")
 root.mainloop()
 GPIO.cleanup()
