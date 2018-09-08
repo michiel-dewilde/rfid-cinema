@@ -8,7 +8,6 @@ from Tkinter import Tk, Label
 global MIFAREReader
 MIFAREReader = MFRC522()
 def readTag():
-    global MIFAREReader
     MIFAREReader.MFRC522_Init()
     (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
     if status != MIFAREReader.MI_OK:
@@ -66,6 +65,12 @@ def showImage(path):
     label.configure(background='black')
     label.pack(side = 'bottom', fill = 'both', expand = 'yes')
 
+def showText(text):
+    clear()
+    label = Label(root, text = text)
+    label.configure(background='black')
+    label.pack(side = 'bottom', fill = 'both', expand = 'yes')
+    
 devnull = open(os.devnull, 'w')
 def showVideo(path, loop=False):
     global videoPlayer
@@ -80,11 +85,18 @@ def showVideo(path, loop=False):
 def cleanup():
     clear()
     root.destroy()
-    
+
+def poll():
+    root.after(100, poll)
+    print readTag()
+    root.update_idletasks()
+
 root.bind('i', lambda e: showImage('/media/usb0/IMG_0681.JPG'))
 root.bind('v', lambda e: showVideo('/media/usb0/F354422ACF-Around the world in 80 days-skUGK5Qut9M.mp4', True))
 root.bind('c', lambda e: clear())
 root.bind('<Escape>',lambda e: cleanup())
 
+poll()
+showText("hello")
 root.mainloop()
 GPIO.cleanup()
