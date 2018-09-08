@@ -1,13 +1,20 @@
 #!/usr/bin/env python
 
 import RPi.GPIO as GPIO
-import MFRC522
-import signal
+from MFRC522 import MFRC522
+import signal, time
 
 GPIO.setwarnings(False)
-MIFAREReader = MFRC522.MFRC522()
+global MIFAREReader
+MIFAREReader = MFRC522()
+
+#print "def", format(MIFAREReader.Read_MFRC522(MFRC522.RFCfgReg), "02X")
+#MIFAREReader.Write_MFRC522(MFRC522.RFCfgReg, 0x70)
+#print "new", format(MIFAREReader.Read_MFRC522(MFRC522.RFCfgReg), "02X")
 
 def readTag():
+    global MIFAREReader
+    MIFAREReader.MFRC522_Init()
     (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
     if status != MIFAREReader.MI_OK:
         return None
@@ -16,4 +23,8 @@ def readTag():
         return None
     return ''.join([format(i,'02X') for i in uid])
 
-print readTag()
+while True:
+    print readTag()
+    time.sleep(0.05)
+
+
