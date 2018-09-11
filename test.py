@@ -14,17 +14,18 @@ MIFAREReader = MFRC522()
 
 def readTag():
     global MIFAREReader
-    MIFAREReader.MFRC522_Init()
-    (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
+    #MIFAREReader.MFRC522_Init()
+    (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQALL)
     if status != MIFAREReader.MI_OK:
         return None
     (status,uid) = MIFAREReader.MFRC522_Anticoll()
     if status != MIFAREReader.MI_OK:
         return None
+    MIFAREReader.MFRC522_Request(MIFAREReader.PICC_HALT)
     return ''.join([format(i,'02X') for i in uid])
 
 while True:
     print readTag()
-    time.sleep(0.05)
+    #time.sleep(0.05)
 
 

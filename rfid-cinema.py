@@ -9,14 +9,14 @@ from Tkinter import Tk, Label, LEFT, StringVar
 global MIFAREReader
 MIFAREReader = MFRC522()
 def readTag():
-    MIFAREReader.MFRC522_Init()
-    (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
+    (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQALL)
     if status != MIFAREReader.MI_OK:
         return None
     (status,uid) = MIFAREReader.MFRC522_Anticoll()
     if status != MIFAREReader.MI_OK:
         return None
-    return ''.join([format(i,'02X') for i in uid[0:4]])
+    MIFAREReader.MFRC522_Request(MIFAREReader.PICC_HALT)
+    return ''.join([format(i,'02X') for i in uid])
 
 root = Tk()
 root.attributes('-fullscreen', True)
@@ -92,10 +92,41 @@ def cleanup():
     clear()
     root.destroy()
 
+helpTagText = ''
+def handleTagChange(tagId):
+    global helpTagText
+    if tagId:
+        helpTagText = tagId
+    showHelpWithTag(helpTagText, bool(tagId));    
+    
+activeTagId = None
+readFailCount = None
+readSuccessTime = None
+def pollTag():
+    global readFailCount
+    global readSuccessTime
+    global activeTagId
+    tagId = readTag()
+    if tagId:
+        readFailCount = 0
+        readSuccessTime = monotonic()
+        if tagId != activeTagId:
+            activeTagId = tagId
+            handleTagChange(tagId)
+    elif activeTagId:
+        failCountExceeded = readFailCount == 4
+        if not failCountExceeded:
+            readFailCount = readFailCount + 1
+        failDurationExceeded = monotonic() - readSuccessTime > 0.5
+        if failCountExceeded and failDurationExceeded:
+            activeTagId = None
+            readFailCount = None
+            readSuccessTime = None
+            handleTagChange(None)
+
 def poll():
-    root.after(100, poll)
-    tag = readTag()
-    showHelpWithTag(tag if tag else 'no tag', bool(tag));
+    root.after(50, poll)
+    pollTag()
     root.update_idletasks()
 
 root.bind('i', lambda e: showImage('/media/usb0/IMG_0681.JPG'))
@@ -103,6 +134,7 @@ root.bind('v', lambda e: showVideo('/media/usb0/F354422ACF-Around the world in 8
 root.bind('c', lambda e: clear())
 root.bind('<Escape>',lambda e: cleanup())
 
+handleTagChange(None)
 poll()
 root.mainloop()
 GPIO.cleanup()
