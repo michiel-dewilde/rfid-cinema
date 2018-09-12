@@ -8,7 +8,7 @@ from Tkinter import Tk, Label, LEFT, StringVar
 
 global MIFAREReader
 MIFAREReader = MFRC522()
-def readTag():
+def readTagUid():
     (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQALL)
     if status != MIFAREReader.MI_OK:
         return None
@@ -17,6 +17,20 @@ def readTag():
         return None
     MIFAREReader.MFRC522_Request(MIFAREReader.PICC_HALT)
     return ''.join([format(i,'02X') for i in uid])
+
+def isValidTagUid(tagUid):
+    if any([c.islower() for c in tagUid]):
+        return False
+    try:
+        uidBytes = [x for x in bytearray(tagUid.decode('hex'))]
+    except:
+        return False
+    if len(uidBytes) != 5:
+        return False
+    serNumCheck = 0
+    for i in xrange(5):
+        serNumCheck = serNumCheck ^ uidBytes[i]
+    return serNumCheck == 0
 
 root = Tk()
 root.attributes('-fullscreen', True)
@@ -63,19 +77,19 @@ def showImage(path):
     clear()
     image = readImage(path)
     photoImage = ImageTk.PhotoImage(image)
-    label = Label(root, image = photoImage, bg = 'black')
+    label = Label(root, image=photoImage, bg='black')
     label.image = photoImage
-    label.pack(fill = 'both', expand = 'yes')
+    label.pack(fill='both', expand='yes')
 
-def showHelpWithTag(tagId = '', tagPresent = False):
+def showHelpWithTag(tagUid='', tagPresent=False):
     global helpTagLabel
     if not helpTagLabel:
         clear()
-        label = Label(root, text = 'help message', fg = 'white', bg = 'black', font=('Helvetica', 20), justify=LEFT)
-        label.pack(side = 'top', fill = 'both', expand = 'yes')
-        helpTagLabel = Label(root, text = '', bg='black', font=("Helvetica", 200))
-        helpTagLabel.pack(side = 'top', fill = 'both', expand = 'no')
-    helpTagLabel.configure(text=tagId, fg=('green' if tagPresent else 'red'))
+        label = Label(root, text='help message', fg='white', bg='black', font=('Helvetica', 20), justify=LEFT)
+        label.pack(side='top', fill='both', expand='yes')
+        helpTagLabel = Label(root, text='', bg='black', font=('Helvetica', 200))
+        helpTagLabel.pack(side='top', fill='both', expand='no')
+    helpTagLabel.configure(text=tagUid, fg=('yellow' if tagPresent else 'grey'))
         
 devnull = open(os.devnull, 'w')
 def showVideo(path, loop=False):
@@ -92,40 +106,104 @@ def cleanup():
     clear()
     root.destroy()
 
+class Rule:
+    minDuration = 'end'
+    lostDuration = 'end'
+    maxDuration = 'end'
+    location = None
+config = None
+
+baseLocation = '/media/usb0'
+configLocation = os.path.join(baseLocation, 'config.txt')
+def readConfig():
+    global config
+    newConfig = {}
+    lineNum = 0
+    for line in open(configLocation, 'U'):
+        lineNum = lineNum + 1
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        id = None
+        rule = Rule()
+        for field in line.split(':'):
+            field = field.strip()
+            if not field:
+                continue
+            lhsrhs = field.split('=')
+            if len(lhsrhs) != 2:
+                raise Exception('config.txt line {}: expected a single \'=\' in \'{}\''.format(lineNum, field))
+            lhs = lhsrhs[0].strip()
+            rhs = lhsrhs[1].strip()
+            if lhs == 'id':
+                if rhs == 'none' or rhs == 'unknown' or isValidTagUid(rhs):
+                    id = rhs
+                else:
+                    raise Exception('config.txt line {}: invalid id: \'{}\''.format(lineNum, rhs))
+            elif lhs == 'min' or lhs == 'lost' or lhs == 'max':
+                if rhs == 'end' or rhs == 'forever':
+                    duration = rhs
+                else:
+                    try:
+                        duration = float(rhs)
+                    except:
+                        raise Exception('config.txt line {}: invalid duration: \'{}\''.format(lineNum, field))
+                setattr(rule, lhs + 'Duration', duration)
+            elif lhs == 'file':
+                location = os.path.join(baseLocation, rhs)
+                if not os.path.isfile(location):
+                    raise Exception('config.txt line {}: missing file: \'{}\''.format(lineNum, rhs))
+                rule.location = location
+            else:
+                raise Exception('config.txt line {}: invalid key \'{}\''.format(lineNum, lhs))
+        if id is None:
+            raise Exception('config.txt line {}: missing id'.format(lineNum))
+        if file is None:
+            raise Exception('config.txt line {}: missing file'.format(lineNum))
+        newConfig[id] = rule
+    config = newConfig
+
 helpTagText = ''
-def handleTagChange(tagId):
+def handleTagChange(tagUid):
     global helpTagText
-    if tagId:
-        helpTagText = tagId
-    showHelpWithTag(helpTagText, bool(tagId));    
+    if tagUid:
+        helpTagText = tagUid
+    showHelpWithTag(helpTagText, bool(tagUid));    
     
-activeTagId = None
+activeTagUid = None
 readFailCount = None
 readSuccessTime = None
 def pollTag():
     global readFailCount
     global readSuccessTime
-    global activeTagId
-    tagId = readTag()
-    if tagId:
+    global activeTagUid
+    tagUid = readTagUid()
+    if tagUid:
+        print isValidTagUid(tagUid)
         readFailCount = 0
         readSuccessTime = monotonic()
-        if tagId != activeTagId:
-            activeTagId = tagId
-            handleTagChange(tagId)
-    elif activeTagId:
+        if tagUid != activeTagUid:
+            activeTagUid = tagUid
+            handleTagChange(tagUid)
+    elif activeTagUid:
         failCountExceeded = readFailCount == 4
         if not failCountExceeded:
             readFailCount = readFailCount + 1
         failDurationExceeded = monotonic() - readSuccessTime > 0.5
         if failCountExceeded and failDurationExceeded:
-            activeTagId = None
+            activeTagUid = None
             readFailCount = None
             readSuccessTime = None
             handleTagChange(None)
 
 def poll():
+    global config
     root.after(50, poll)
+    if os.path.isfile(configLocation):
+        if config is not None:
+            readConfig()
+    else:
+        config = None
     pollTag()
     root.update_idletasks()
 
