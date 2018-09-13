@@ -6,17 +6,23 @@ from MFRC522 import MFRC522
 from repoze.lru import lru_cache
 from Tkinter import Tk, Label, LEFT, StringVar
 
-global MIFAREReader
-MIFAREReader = MFRC522()
-def readTagUid():
-    (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQALL)
-    if status != MIFAREReader.MI_OK:
-        return None
-    (status,uid) = MIFAREReader.MFRC522_Anticoll()
-    if status != MIFAREReader.MI_OK:
-        return None
-    MIFAREReader.MFRC522_Request(MIFAREReader.PICC_HALT)
-    return ''.join([format(i,'02X') for i in uid])
+devnull = open(os.devnull, 'w')
+baseLocation = '/media/usb0'
+configName = 'config.txt'
+configLocation = os.path.join(baseLocation, configName)
+
+class TagUidReader:
+    def __init__(self):
+        self.reader = MFRC522()
+    def readTagUid(self):
+        (status,TagType) = self.reader.MFRC522_Request(MFRC522.PICC_REQALL)
+        if status != MFRC522.MI_OK:
+            return None
+        (status,uid) = self.reader.MFRC522_Anticoll()
+        if status != MFRC522.MI_OK:
+            return None
+        self.reader.MFRC522_Request(MFRC522.PICC_HALT)
+        return ''.join([format(i,'02X') for i in uid])
 
 def isValidTagUid(tagUid):
     if any([c.islower() for c in tagUid]):
@@ -31,22 +37,6 @@ def isValidTagUid(tagUid):
     for i in xrange(5):
         serNumCheck = serNumCheck ^ uidBytes[i]
     return serNumCheck == 0
-
-root = Tk()
-root.attributes('-fullscreen', True)
-root.configure(bg='black', cursor='none')
-
-helpTagLabel = None
-videoPlayer = None
-
-def clear():
-    global helpTagLabel, videoPlayer
-    helpTagLabel = None
-    if videoPlayer is not None:
-        os.killpg(os.getpgid(videoPlayer.pid), signal.SIGTERM)
-        videoPlayer = None
-    for widget in root.winfo_children():
-        widget.destroy()
 
 @lru_cache(maxsize=32)
 def readImage(path):
@@ -64,8 +54,8 @@ def readImage(path):
         image = image.rotate(270, expand=True)
     elif orientation == 8:
         image = image.rotate(90, expand=True)
-    swidth = root.winfo_screenwidth()
-    sheight = root.winfo_screenheight()
+    swidth = gui.root.winfo_screenwidth()
+    sheight = gui.root.winfo_screenheight()
     if (image.width != swidth or image.height > sheight) and (image.height != sheight or image.width > swidth):
         hratio = swidth/float(image.width)
         vratio = sheight/float(image.height)
@@ -73,146 +63,192 @@ def readImage(path):
         image = image.resize((int(round(ratio*image.width)), int(round(ratio*image.height))), Image.LANCZOS)
     return image
 
-def showImage(path):
-    clear()
-    image = readImage(path)
-    photoImage = ImageTk.PhotoImage(image)
-    label = Label(root, image=photoImage, bg='black')
-    label.image = photoImage
-    label.pack(fill='both', expand='yes')
+class Gui:
+    def __init__(self):
+        self.root = Tk()
+        self.root.attributes('-fullscreen', True)
+        self.root.configure(bg='black', cursor='none')
+        self.root.bind('i', lambda e: self.showImage('/media/usb0/IMG_0681.JPG'))
+        self.root.bind('v', lambda e: self.showVideo('/media/usb0/F354422ACF-Around the world in 80 days-skUGK5Qut9M.mp4', True))
+        self.root.bind('c', lambda e: self.clear())
+        self.root.bind('<Escape>',lambda e: self.cleanup())
+        self.helpTagLabel = None
+        self.videoPlayer = None
 
-def showHelpWithTag(tagUid='', tagPresent=False):
-    global helpTagLabel
-    if not helpTagLabel:
-        clear()
-        label = Label(root, text='help message', fg='white', bg='black', font=('Helvetica', 20), justify=LEFT)
-        label.pack(side='top', fill='both', expand='yes')
-        helpTagLabel = Label(root, text='', bg='black', font=('Helvetica', 200))
-        helpTagLabel.pack(side='top', fill='both', expand='no')
-    helpTagLabel.configure(text=tagUid, fg=('yellow' if tagPresent else 'grey'))
+    def clear(self):
+        self.helpTagLabel = None
+        if self.videoPlayer is not None:
+            os.killpg(os.getpgid(self.videoPlayer.pid), signal.SIGTERM)
+        self.videoPlayer = None
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+    def showImage(self, path):
+        self.clear()
+        image = readImage(path)
+        photoImage = ImageTk.PhotoImage(image)
+        label = Label(self.root, image=photoImage, bg='black')
+        label.image = photoImage
+        label.pack(fill='both', expand='yes')
+
+    def showVideo(self, path, loop=False):
+        self.clear()
+        args = ['/usr/bin/omxplayer', '-o', 'both', '--no-osd', '--no-keys']
+        if loop:
+            args.append('--loop')
+        args.append('--')
+        args.append(path)
+        self.videoPlayer = subprocess.Popen(args, preexec_fn=os.setsid, stdin=devnull, stdout=devnull, stderr=devnull)
+
+    def showHelpWithTagUid(self, tagUid):
+        if not self.helpTagLabel:
+            self.clear()
+            helpText = """This is a presentation system showing a video or an image when the associated RFID tag is presented.
+This system was originally developed for O Lab Overbeke, Habbekrats Wetteren and faro.be
+by Michiel De Wilde <michiel.dewilde@gmail.com>.
+
+Insert a USB stick with a file named '{}'.
+In that file, each line needs to associate an RFID tag with a video or image file.
+
+Use the following syntax:
+    id=<RFID tag ID>:file=<file name>
+
+You can use ISO 14443A 'MIFARE' tags having a 4-byte unique ID.
+If you present an RFID tag now, its ID is shown below this message.
+Use 'id=none' to configure what to do when idle.
+Use 'id=unknown' to configure what to do with an unknown tag.
+
+Supported formats are mp4 or m4v (videos) and jpg or png (images).
+
+You can add extra fields 'min', 'lost' and 'max':
+    - min: minimal duration
+    - lost: duration after tag removal
+    - max: maximal duration
+Valid values are:
+    - a time in seconds (e.g; '1.5')
+    - 'end' to wait until the end of the video (default)
+    - 'forever' to loop the video
+
+Example:
+    id=F354422ACF:min=end:lost=end:max=forever:file=myvideo.mp4
+
+This message is shown because the '{}' file (or the entire USB stick) is missing.
+Normal functionality is resumed immediately after inserting a configured stick.""".format(configName, configName)
+            label = Label(self.root, text=helpText, fg='white', bg='black', font=('Helvetica', 16), justify=LEFT)
+            label.pack(side='top', fill='both', expand='yes')
+            self.helpTagLabel = Label(self.root, text='', bg='black', font=('Helvetica', 200))
+            self.helpTagLabel.pack(side='top', fill='both', expand='no')
+        if tagUid:
+            self.helpTagLabel.configure(text=tagUid, fg='yellow')
+        else:
+            self.helpTagLabel.configure(fg='grey')
         
-devnull = open(os.devnull, 'w')
-def showVideo(path, loop=False):
-    global videoPlayer
-    clear()
-    args = ['/usr/bin/omxplayer', '-o', 'both', '--no-osd', '--no-keys']
-    if loop:
-        args.append('--loop')
-    args.append('--')
-    args.append(path)
-    videoPlayer = subprocess.Popen(args, preexec_fn=os.setsid, stdin=devnull, stdout=devnull, stderr=devnull)
-
-def cleanup():
-    clear()
-    root.destroy()
+    def cleanup(self):
+        self.clear()
+        self.root.destroy()
 
 class Rule:
-    minDuration = 'end'
-    lostDuration = 'end'
-    maxDuration = 'end'
-    location = None
-config = None
+    def __init__(self):
+        self.minDuration = 'end'
+        self.lostDuration = 'end'
+        self.maxDuration = 'end'
+        self.location = None
 
-baseLocation = '/media/usb0'
-configLocation = os.path.join(baseLocation, 'config.txt')
 def readConfig():
-    global config
-    newConfig = {}
+    config = {}
     lineNum = 0
     for line in open(configLocation, 'U'):
         lineNum = lineNum + 1
-        line = line.strip()
-        if not line or line.startswith('#'):
-            continue
-        id = None
-        rule = Rule()
-        for field in line.split(':'):
-            field = field.strip()
-            if not field:
+        try:
+            line = line.strip()
+            if not line or line.startswith('#'):
                 continue
-            lhsrhs = field.split('=')
-            if len(lhsrhs) != 2:
-                raise Exception('config.txt line {}: expected a single \'=\' in \'{}\''.format(lineNum, field))
-            lhs = lhsrhs[0].strip()
-            rhs = lhsrhs[1].strip()
-            if lhs == 'id':
-                if rhs == 'none' or rhs == 'unknown' or isValidTagUid(rhs):
-                    id = rhs
+            tagUids = []
+            rule = Rule()
+            for field in line.split(':'):
+                field = field.strip()
+                if not field:
+                    continue
+                lhsrhs = field.split('=')
+                if len(lhsrhs) != 2:
+                    raise Exception("expected a single '=' in '{}'".format(field))
+                lhs = lhsrhs[0].strip()
+                rhs = lhsrhs[1].strip()
+                if lhs == 'id':
+                    if rhs == 'none' or rhs == 'unknown' or isValidTagUid(rhs):
+                        tagUids.append(rhs)
+                    else:
+                        raise Exception("invalid id: '{}'".format(rhs))
+                elif lhs == 'min' or lhs == 'lost' or lhs == 'max':
+                    if rhs == 'end' or rhs == 'forever':
+                        duration = rhs
+                    else:
+                        try:
+                            duration = float(rhs)
+                        except:
+                            raise Exception("invalid duration: '{}'".format(field))
+                    setattr(rule, lhs + 'Duration', duration)
+                elif lhs == 'file':
+                    location = os.path.join(baseLocation, rhs)
+                    if not os.path.isfile(location):
+                        raise Exception("missing file: '{}'".format(rhs))
+                    rule.location = location
                 else:
-                    raise Exception('config.txt line {}: invalid id: \'{}\''.format(lineNum, rhs))
-            elif lhs == 'min' or lhs == 'lost' or lhs == 'max':
-                if rhs == 'end' or rhs == 'forever':
-                    duration = rhs
-                else:
-                    try:
-                        duration = float(rhs)
-                    except:
-                        raise Exception('config.txt line {}: invalid duration: \'{}\''.format(lineNum, field))
-                setattr(rule, lhs + 'Duration', duration)
-            elif lhs == 'file':
-                location = os.path.join(baseLocation, rhs)
-                if not os.path.isfile(location):
-                    raise Exception('config.txt line {}: missing file: \'{}\''.format(lineNum, rhs))
-                rule.location = location
+                    raise Exception("invalid key '{}'".format(lhs))
+            for tagUid in tagUids:
+                config[tagUid] = rule
+        except Exception, e:
+            raise Exception('{} line {}: {}'.format(configName, lineNum, e.message))
+    return config
+
+class TagPoller:
+    def __init__(self):
+        self.isFirstPoll = True
+        self.activeTagUid = None
+        self.readFailCount = None
+        self.readSuccessTime = None
+        self.tagUidReader = TagUidReader()        
+    def pollTagUidAndHasChanged(self):
+        tagUid = self.tagUidReader.readTagUid()
+        hasChanged = self.isFirstPoll
+        self.isFirstPoll = False
+        if tagUid:
+            self.readFailCount = 0
+            self.readSuccessTime = monotonic()
+            if tagUid != self.activeTagUid:
+                self.activeTagUid = tagUid
+                hasChanged = True
+        elif self.activeTagUid:
+            failCountExceeded = self.readFailCount == 4
+            if not failCountExceeded:
+                self.readFailCount = self.readFailCount + 1
+            failDurationExceeded = monotonic() - self.readSuccessTime > 0.5
+            if failCountExceeded and failDurationExceeded:
+                self.activeTagUid = None
+                self.readFailCount = None
+                self.readSuccessTime = None
+                hasChanged = True
+        return self.activeTagUid, hasChanged
+
+class Main:
+    def __init__(self):
+        self.tagPoller = TagPoller()
+        self.poll()
+        gui.root.mainloop()
+        GPIO.cleanup()
+
+    def poll(self):
+        global config
+        gui.root.after(50, self.poll)
+        if os.path.isfile(configLocation):
+            if config is not None:
+                config = readConfig()
             else:
-                raise Exception('config.txt line {}: invalid key \'{}\''.format(lineNum, lhs))
-        if id is None:
-            raise Exception('config.txt line {}: missing id'.format(lineNum))
-        if file is None:
-            raise Exception('config.txt line {}: missing file'.format(lineNum))
-        newConfig[id] = rule
-    config = newConfig
+                config = None
+        tagUid, hasChanged = self.tagPoller.pollTagUidAndHasChanged()
+        if hasChanged:
+            gui.showHelpWithTagUid(tagUid);                
+        gui.root.update_idletasks()
 
-helpTagText = ''
-def handleTagChange(tagUid):
-    global helpTagText
-    if tagUid:
-        helpTagText = tagUid
-    showHelpWithTag(helpTagText, bool(tagUid));    
-    
-activeTagUid = None
-readFailCount = None
-readSuccessTime = None
-def pollTag():
-    global readFailCount
-    global readSuccessTime
-    global activeTagUid
-    tagUid = readTagUid()
-    if tagUid:
-        print isValidTagUid(tagUid)
-        readFailCount = 0
-        readSuccessTime = monotonic()
-        if tagUid != activeTagUid:
-            activeTagUid = tagUid
-            handleTagChange(tagUid)
-    elif activeTagUid:
-        failCountExceeded = readFailCount == 4
-        if not failCountExceeded:
-            readFailCount = readFailCount + 1
-        failDurationExceeded = monotonic() - readSuccessTime > 0.5
-        if failCountExceeded and failDurationExceeded:
-            activeTagUid = None
-            readFailCount = None
-            readSuccessTime = None
-            handleTagChange(None)
-
-def poll():
-    global config
-    root.after(50, poll)
-    if os.path.isfile(configLocation):
-        if config is not None:
-            readConfig()
-    else:
-        config = None
-    pollTag()
-    root.update_idletasks()
-
-root.bind('i', lambda e: showImage('/media/usb0/IMG_0681.JPG'))
-root.bind('v', lambda e: showVideo('/media/usb0/F354422ACF-Around the world in 80 days-skUGK5Qut9M.mp4', True))
-root.bind('c', lambda e: clear())
-root.bind('<Escape>',lambda e: cleanup())
-
-handleTagChange(None)
-poll()
-root.mainloop()
-GPIO.cleanup()
+gui = Gui()
+main = Main()
