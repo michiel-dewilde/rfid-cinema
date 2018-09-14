@@ -68,38 +68,86 @@ class Gui:
         self.root = Tk()
         self.root.attributes('-fullscreen', True)
         self.root.configure(bg='black', cursor='none')
-        self.root.bind('i', lambda e: self.showImage('/media/usb0/IMG_0681.JPG'))
-        self.root.bind('v', lambda e: self.showVideo('/media/usb0/F354422ACF-Around the world in 80 days-skUGK5Qut9M.mp4', True))
+        self.root.bind('i', lambda e: self.showFile('IMG_0681.JPG'))
+        self.root.bind('j', lambda e: self.showFile('761AB7C318-RFID-RC522-raspberry-pi-3-1024x513.png'))
+        self.root.bind('v', lambda e: self.showFile('F354422ACF-Around the world in 80 days-skUGK5Qut9M.mp4', True))
         self.root.bind('c', lambda e: self.clear())
         self.root.bind('<Escape>',lambda e: self.cleanup())
         self.helpTagLabel = None
+        self.imageLabel = None
+        self.videoFileName = None
         self.videoPlayer = None
 
     def clear(self):
         self.helpTagLabel = None
+        self.imageLabel = None
+        self.videoFileName = None
         if self.videoPlayer is not None:
             os.killpg(os.getpgid(self.videoPlayer.pid), signal.SIGTERM)
         self.videoPlayer = None
         for widget in self.root.winfo_children():
             widget.destroy()
 
-    def showImage(self, path):
+    def showStartupMessage(self):
         self.clear()
-        image = readImage(path)
-        photoImage = ImageTk.PhotoImage(image)
-        label = Label(self.root, image=photoImage, bg='black')
-        label.image = photoImage
-        label.pack(fill='both', expand='yes')
+        swidth = self.root.winfo_screenwidth()
+        message='Hello there! Starting in a few seconds...\nFor help on setting up this system, pull out the USB stick at any time.'
+        label = Label(self.root, text=message, fg='green', bg='black', font=('Helvetica', int(round(swidth/48.0))), justify=LEFT)
+        label.pack(side='top', fill='both', expand='yes')
+        
+    def showError(self, message):
+        self.clear()
+        swidth = self.root.winfo_screenwidth()
+        label = Label(self.root, text=message, fg='red', bg='black', font=('Helvetica', int(round(swidth/96.0))), justify=LEFT)
+        label.pack(side='top', fill='both', expand='yes')
 
-    def showVideo(self, path, loop=False):
-        self.clear()
+    def showImage(self, fileName):
+        try:
+            image = readImage(os.path.join(baseLocation, fileName))
+            photoImage = ImageTk.PhotoImage(image)
+        except Exception, e:
+            self.showError("Error showing image '{}':\n{}".format(fileName, str(e)))
+            return
+        if not self.imageLabel:
+            self.clear()
+            self.imageLabel = Label(self.root, bg='black')
+            self.imageLabel.pack(side='top', fill='both', expand='yes')
+        self.imageLabel.configure(image=photoImage)
+        self.imageLabel.image = photoImage
+
+    def showVideo(self, fileName, loop=False):
         args = ['/usr/bin/omxplayer', '-o', 'both', '--no-osd', '--no-keys']
         if loop:
             args.append('--loop')
         args.append('--')
-        args.append(path)
+        args.append(os.path.join(baseLocation, fileName))
+        self.clear()
+        self.root.update_idletasks()
+        self.videoFileName = fileName
         self.videoPlayer = subprocess.Popen(args, preexec_fn=os.setsid, stdin=devnull, stdout=devnull, stderr=devnull)
 
+    def updateVideoPollDoneNow(self):
+        if self.videoPlayer is None:
+            return False
+        exitCode = self.videoPlayer.poll()
+        if exitCode is None:
+            return False
+        fileName = self.videoFileName
+        self.videoFileName = None
+        self.videoPlayer = None
+        if exitCode != 0:
+            self.showError("Error showing video '{}'".format(fileName))
+            return False
+        return True
+        
+    def showFile(self, fileName, loop=False):
+        if fileName is None:
+            clear()
+        elif os.path.splitext(fileName)[1].lower() in ('.bmp', '.gif', '.jpg', '.jpeg', '.png'):
+            self.showImage(fileName)
+        else:
+            self.showVideo(fileName, loop)
+        
     def showHelpWithTagUid(self, tagUid):
         if not self.helpTagLabel:
             self.clear()
@@ -118,7 +166,7 @@ If you present an RFID tag now, its ID is shown below this message.
 Use 'id=none' to configure what to do when idle.
 Use 'id=unknown' to configure what to do with an unknown tag.
 
-Supported formats are mp4 or m4v (videos) and jpg or png (images).
+Supported formats are avi/flv/mov/mpg/mp4/mkv/m4v (videos) and bmp/gif/jpg/png (images).
 
 You can add extra fields 'min', 'lost' and 'max':
     - min: minimal duration
@@ -134,9 +182,10 @@ Example:
 
 This message is shown because the '{}' file (or the entire USB stick) is missing.
 Normal functionality is resumed immediately after inserting a configured stick.""".format(configName, configName)
-            label = Label(self.root, text=helpText, fg='white', bg='black', font=('Helvetica', 16), justify=LEFT)
+            swidth = self.root.winfo_screenwidth()
+            label = Label(self.root, text=helpText, fg='white', bg='black', font=('Helvetica', int(round(swidth/120.0))), justify=LEFT)
             label.pack(side='top', fill='both', expand='yes')
-            self.helpTagLabel = Label(self.root, text='', bg='black', font=('Helvetica', 200))
+            self.helpTagLabel = Label(self.root, text='', bg='black', font=('Helvetica', int(round(swidth/9.6))))
             self.helpTagLabel.pack(side='top', fill='both', expand='no')
         if tagUid:
             self.helpTagLabel.configure(text=tagUid, fg='yellow')
@@ -152,7 +201,7 @@ class Rule:
         self.minDuration = 'end'
         self.lostDuration = 'end'
         self.maxDuration = 'end'
-        self.location = None
+        self.fileName = None
 
 def readConfig():
     config = {}
@@ -189,16 +238,15 @@ def readConfig():
                             raise Exception("invalid duration: '{}'".format(field))
                     setattr(rule, lhs + 'Duration', duration)
                 elif lhs == 'file':
-                    location = os.path.join(baseLocation, rhs)
-                    if not os.path.isfile(location):
+                    rule.fileName = rhs.replace('\\', '/')
+                    if not os.path.isfile(os.path.join(baseLocation, fileName)):
                         raise Exception("missing file: '{}'".format(rhs))
-                    rule.location = location
                 else:
                     raise Exception("invalid key '{}'".format(lhs))
             for tagUid in tagUids:
                 config[tagUid] = rule
         except Exception, e:
-            raise Exception('{} line {}: {}'.format(configName, lineNum, e.message))
+            raise Exception('{} line {}: {}'.format(configName, lineNum, str(e)))
     return config
 
 class TagPoller:
@@ -232,22 +280,43 @@ class TagPoller:
 
 class Main:
     def __init__(self):
+        self.config = None
+        self.isFirstPoll = True
         self.tagPoller = TagPoller()
-        self.poll()
+        gui.showStartupMessage()
+        gui.root.after(5000, self.poll)
         gui.root.mainloop()
         GPIO.cleanup()
 
     def poll(self):
         global config
         gui.root.after(50, self.poll)
+
+        configHasChanged = self.isFirstPoll
+        self.isFirstPoll = False
+
         if os.path.isfile(configLocation):
-            if config is not None:
-                config = readConfig()
-            else:
-                config = None
-        tagUid, hasChanged = self.tagPoller.pollTagUidAndHasChanged()
-        if hasChanged:
-            gui.showHelpWithTagUid(tagUid);                
+            if self.config is None:
+                configHasChanged = True
+                try:
+                    self.config = readConfig()
+                except Exception, e:
+                    gui.showError("Error reading configuration:\n{}".format(str(e)))
+                    self.config = 'bad'
+        else:
+            if self.config is not None:
+                configHasChanged = True
+                self.config = None
+
+        tagUid, tagHasChanged = self.tagPoller.pollTagUidAndHasChanged()
+        videoDoneNow = gui.updateVideoPollDoneNow()
+        
+        if self.config is None:
+            if configHasChanged or tagHasChanged:
+                gui.showHelpWithTagUid(tagUid);
+        elif self.config != 'bad':
+            pass
+        
         gui.root.update_idletasks()
 
 gui = Gui()
