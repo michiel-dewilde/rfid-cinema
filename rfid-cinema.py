@@ -68,10 +68,6 @@ class Gui:
         self.root = Tk()
         self.root.attributes('-fullscreen', True)
         self.root.configure(bg='black', cursor='none')
-        self.root.bind('i', lambda e: self.showFile('IMG_0681.JPG'))
-        self.root.bind('j', lambda e: self.showFile('761AB7C318-RFID-RC522-raspberry-pi-3-1024x513.png'))
-        self.root.bind('v', lambda e: self.showFile('F354422ACF-Around the world in 80 days-skUGK5Qut9M.mp4', True))
-        self.root.bind('c', lambda e: self.clear())
         self.root.bind('<Escape>',lambda e: self.cleanup())
         self.helpTagLabel = None
         self.imageLabel = None
