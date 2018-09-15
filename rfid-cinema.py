@@ -80,6 +80,7 @@ class Gui:
         self.videoFileName = None
         if self.videoPlayer is not None:
             os.killpg(os.getpgid(self.videoPlayer.pid), signal.SIGTERM)
+            self.videoPlayer.wait()
         self.videoPlayer = None
         for widget in self.root.winfo_children():
             widget.destroy()
