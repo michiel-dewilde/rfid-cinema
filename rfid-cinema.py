@@ -3,9 +3,10 @@ from monotonic import monotonic
 from PIL import ImageTk, Image
 import RPi.GPIO as GPIO
 from MFRC522 import MFRC522
-from repoze.lru import lru_cache
+from repoze.lru import CacheMaker
 from Tkinter import Tk, Label, LEFT, StringVar
 
+cacheMaker = CacheMaker()
 devnull = open(os.devnull, 'w')
 baseLocation = '/media/usb0'
 configName = 'config.txt'
@@ -38,7 +39,7 @@ def isValidTagUid(tagUid):
         serNumCheck = serNumCheck ^ uidBytes[i]
     return serNumCheck == 0
 
-@lru_cache(maxsize=32)
+@cacheMaker.lrucache(maxsize=32)
 def readImage(path):
     image = Image.open(path)
     orientation = 1
@@ -386,6 +387,7 @@ class Main:
 
         if configHasChanged:
             self.initRule()
+            cacheMaker.clear()
                 
         if self.config is None:
             if configHasChanged or tagHasChanged:
