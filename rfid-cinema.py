@@ -116,13 +116,12 @@ class Gui:
         self.imageLabel.image = photoImage
 
     def showVideo(self, fileName, loop=False):
-        args = ['/usr/bin/omxplayer', '-o', 'both', '--no-osd', '--no-keys']
+        args = ['/usr/bin/omxplayer', '-b', '-o', 'both', '--no-osd', '--no-keys']
         if loop:
             args.append('--loop')
         args.append('--')
         args.append(os.path.join(baseLocation, fileName))
         self.clear()
-        self.root.update_idletasks()
         self.videoFileName = fileName
         self.videoPlayer = subprocess.Popen(args, preexec_fn=os.setsid, stdin=devnull, stdout=devnull, stderr=devnull)
 
