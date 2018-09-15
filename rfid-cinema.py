@@ -238,7 +238,7 @@ def readConfig():
                     setattr(rule, lhs + 'Duration', duration)
                 elif lhs == 'file':
                     rule.fileName = rhs.replace('\\', '/')
-                    if not os.path.isfile(os.path.join(baseLocation, fileName)):
+                    if not os.path.isfile(os.path.join(baseLocation, rule.fileName)):
                         raise Exception("missing file: '{}'".format(rhs))
                 else:
                     raise Exception("invalid key '{}'".format(lhs))
@@ -282,11 +282,88 @@ class Main:
         self.config = None
         self.isFirstPoll = True
         self.tagPoller = TagPoller()
+        self.initRule()
         gui.showStartupMessage()
         gui.root.after(5000, self.poll)
         gui.root.mainloop()
         GPIO.cleanup()
 
+    def initRule(self):
+        self.currentRule = None
+        self.ruleRunningSince = 0.0
+        self.minDurationReached = True
+        self.maxDurationReached = True
+        self.tagLostSince = None
+
+    def updateTagLostSince(self, tagUid, now):
+        if tagUid is None:
+            if self.tagLostSince is None:
+                self.tagLostSince = now
+        else:
+            self.tagLostSince = None
+
+    def processCurrentRule(self, tagUid, now, videoDoneNow):
+        if self.currentRule is None:
+            return
+        if not self.maxDurationReached:
+            if not self.minDurationReached:
+                if self.currentRule.minDuration == 'forever':
+                    pass
+                elif self.currentRule.minDuration == 'end':
+                    if videoDoneNow:
+                        self.minDurationReached = True
+                else:
+                    if now - self.ruleRunningSince >= self.currentRule.minDuration:
+                        self.minDurationReached = True
+            if tagUid is None and self.minDurationReached:
+                if self.currentRule.lostDuration == 'forever':
+                    pass
+                elif self.currentRule.lostDuration == 'end':
+                    if videoDoneNow:
+                        self.maxDurationReached = True
+                else:
+                    if now - self.tagLostSince >= self.currentRule.lostDuration:
+                        self.maxDurationReached = True
+                        gui.clear()
+        if not self.maxDurationReached:
+            if self.currentRule.maxDuration == 'forever':
+                if videoDoneNow:
+                    gui.showFile(self.currentRule.fileName, loop=False)
+            elif self.currentRule.maxDuration == 'end':
+                if videoDoneNow:
+                    self.maxDurationReached = True
+            else:
+                if now - self.ruleRunningSince >= self.currentRule.maxDuration:
+                    self.maxDurationReached = True
+                    gui.clear()
+
+    def processNewRule(self, tagUid, now):
+        rule = None
+        if tagUid is None:
+            if self.maxDurationReached:
+                rule = self.config.get('none', None)
+                if rule is None:
+                    self.initRule()
+        else:
+            rule = self.config.get(tagUid, None)
+            if rule is None:
+                rule = self.config.get('unknown', None)
+                
+        if rule is not None and rule is not self.currentRule:
+            self.currentRule = rule
+            self.ruleRunningSince = now
+            self.minDurationReached = False
+            self.maxDurationReached = False
+            loop = (tagUid is None or (rule.minDuration != 'end' and rule.lostDuration != 'end')) \
+                and rule.maxDuration == 'forever'
+            gui.showFile(rule.fileName, loop=loop)
+        
+    def runConfig(self, tagUid, videoDoneNow):
+        now = monotonic()
+        self.updateTagLostSince(tagUid, now)
+        self.processCurrentRule(tagUid, now, videoDoneNow)
+        self.processNewRule(tagUid, now)
+        
     def poll(self):
         global config
         gui.root.after(50, self.poll)
@@ -309,12 +386,17 @@ class Main:
 
         tagUid, tagHasChanged = self.tagPoller.pollTagUidAndHasChanged()
         videoDoneNow = gui.updateVideoPollDoneNow()
-        
+
+        if configHasChanged:
+            self.initRule()
+                
         if self.config is None:
             if configHasChanged or tagHasChanged:
-                gui.showHelpWithTagUid(tagUid);
+                gui.showHelpWithTagUid(tagUid)
         elif self.config != 'bad':
-            pass
+            if configHasChanged:
+                gui.clear()
+            self.runConfig(tagUid, videoDoneNow)
         
         gui.root.update_idletasks()
 
