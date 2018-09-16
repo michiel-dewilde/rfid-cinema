@@ -5,7 +5,7 @@ This is a presentation system showing a video or an image when the associated RF
 This system was originally developed for O Lab Overbeke, Habbekrats Wetteren and faro.be
 by Michiel De Wilde <michiel.dewilde@gmail.com>.
 
-Insert a USB stick with a file named '{}'.
+Insert a USB stick with a file named 'config.txt'.
 In that file, each line needs to associate an RFID tag with a video or image file.
 
 Use the following syntax:
@@ -30,7 +30,7 @@ Valid values are:
 Example:
     id=F354422ACF:min=end:lost=end:max=forever:file=myvideo.mp4
 
-This message is shown because the '{}' file (or the entire USB stick) is missing.
+This message is shown because the 'config.txt' file (or the entire USB stick) is missing.
 Normal functionality is resumed immediately after inserting a configured stick.
 ```
 ## Hardware
