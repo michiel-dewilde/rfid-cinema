@@ -46,7 +46,7 @@ Normal functionality is resumed immediately after inserting a configured stick.
     - Country: Belgium
     - Language: Flemish
     - Timezone: Brussels
-  - Password `raspberry`
+  - Password `olab4me`
   - Skip Select WiFi network
   - Check for Updates
   - `sudo reboot` (open a terminal to enter commands marked like this)
