@@ -33,7 +33,20 @@ Example:
 This message is shown because the '{}' file (or the entire USB stick) is missing.
 Normal functionality is resumed immediately after inserting a configured stick.
 ```
-## Installation
+## Hardware
+- Buy the following stuff (I used https://www.hackerstore.nl/):
+  - HDMI cable
+  - Micro SD 16Gb
+  - Micro USB cable
+  - NFC kit MFRC522
+  - Some NFC stickers
+  - Raspberry Pi 3 B+
+  - USB adapter
+  - USB stick 16 GB
+  - Wires female-female
+- Connect as follows:
+  ![Connection diagram](RFID-RC522-raspberry-pi-3-1024x513.png)
+## Software
 - Download Raspbian image from https://www.raspberrypi.org/downloads/raspbian/
   (Our image was 2018-06-27-raspbian-stretch.zip)
 - Download Etcher from https://etcher.io/
