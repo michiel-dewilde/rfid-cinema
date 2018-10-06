@@ -8,7 +8,9 @@ from Tkinter import Tk, Label, LEFT, StringVar
 
 cacheMaker = CacheMaker()
 devnull = open(os.devnull, 'w')
-baseLocation = '/media/usb0'
+selfMountPath = '/rfid-cinema'
+isSelfMount = os.path.exists(selfMountPath)
+baseLocation = selfMountPath if isSelfMount else '/media/usb0'
 configName = 'config.txt'
 configLocation = os.path.join(baseLocation, configName)
 
@@ -39,7 +41,7 @@ def isValidTagUid(tagUid):
         serNumCheck = serNumCheck ^ uidBytes[i]
     return serNumCheck == 0
 
-@cacheMaker.lrucache(maxsize=32)
+@cacheMaker.lrucache(maxsize=16)
 def readImage(path):
     image = Image.open(path)
     orientation = 1
@@ -89,7 +91,7 @@ class Gui:
     def showStartupMessage(self):
         self.clear()
         swidth = self.root.winfo_screenwidth()
-        message='Hello there! Starting in a few seconds...\nFor help on setting up this system, pull out the USB stick at any time.'
+        message='Hello there! Configuration successful, starting in a few seconds...\nFor help on setting up this system, {}.'.format('unplug and connect the USB cable to a PC' if isSelfMount else 'pull out the USB stick at any time')
         label = Label(self.root, text=message, fg='green', bg='black', font=('Helvetica', int(round(swidth/48.0))), justify=LEFT)
         label.pack(side='top', fill='both', expand='yes')
         
@@ -152,7 +154,7 @@ class Gui:
 This system was originally developed for O Lab Overbeke, Habbekrats Wetteren and faro.be
 by Michiel De Wilde <michiel.dewilde@gmail.com>.
 
-Insert a USB stick with a file named '{}'.
+{} a file named '{}'.
 In that file, each line needs to associate an RFID tag with a video or image file.
 
 Use the following syntax:
@@ -177,8 +179,11 @@ Valid values are:
 Example:
     id=F354422ACF:min=end:lost=end:max=forever:file=myvideo.mp4
 
-This message is shown because the '{}' file (or the entire USB stick) is missing.
-Normal functionality is resumed immediately after inserting a configured stick.""".format(configName, configName)
+""".format('This device is a USB drive on your PC. Create' if isSelfMount else 'Insert a USB stick with', configName)
+            if isSelfMount:
+                helpText += 'This message is shown because this device is connected to a PC.\nNormal functionality is resumed after you connect this device to a dumb power supply.'
+            else:
+                helpText += "This message is shown because the '{}' file (or the entire USB stick) is missing.\nNormal functionality is resumed immediately after inserting a configured stick.\n".format(configName)
             swidth = self.root.winfo_screenwidth()
             label = Label(self.root, text=helpText, fg='white', bg='black', font=('Helvetica', int(round(swidth/120.0))), justify=LEFT)
             label.pack(side='top', fill='both', expand='yes')
@@ -199,6 +204,9 @@ class Rule:
         self.lostDuration = 'end'
         self.maxDuration = 'end'
         self.fileName = None
+
+startupRule = Rule()
+startupRule.maxDuration = 5.0
 
 def readConfig():
     config = {}
@@ -281,8 +289,7 @@ class Main:
         self.isFirstPoll = True
         self.tagPoller = TagPoller()
         self.initRule()
-        gui.showStartupMessage()
-        gui.root.after(5000, self.poll)
+        self.poll()
         gui.root.mainloop()
         GPIO.cleanup()
 
@@ -356,8 +363,7 @@ class Main:
                 and rule.maxDuration == 'forever'
             gui.showFile(rule.fileName, loop=loop)
         
-    def runConfig(self, tagUid, videoDoneNow):
-        now = monotonic()
+    def runConfig(self, tagUid, now, videoDoneNow):
         self.updateTagLostSince(tagUid, now)
         self.processCurrentRule(tagUid, now, videoDoneNow)
         self.processNewRule(tagUid, now)
@@ -393,9 +399,14 @@ class Main:
             if configHasChanged or tagHasChanged:
                 gui.showHelpWithTagUid(tagUid)
         elif self.config != 'bad':
+            now = monotonic()
             if configHasChanged:
-                gui.clear()
-            self.runConfig(tagUid, videoDoneNow)
+                self.currentRule = startupRule
+                self.ruleRunningSince = now
+                self.minDurationReached = False
+                self.maxDurationReached = False
+                gui.showStartupMessage()
+            self.runConfig(tagUid, now, videoDoneNow)
         
         gui.root.update_idletasks()
 
