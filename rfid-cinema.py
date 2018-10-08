@@ -13,6 +13,7 @@ isSelfMount = os.path.exists(selfMountPath)
 baseLocation = selfMountPath if isSelfMount else '/media/usb0'
 configName = 'config.txt'
 configLocation = os.path.join(baseLocation, configName)
+lang = 'en'
 
 class TagUidReader:
     def __init__(self):
@@ -91,14 +92,21 @@ class Gui:
     def showStartupMessage(self):
         self.clear()
         swidth = self.root.winfo_screenwidth()
-        message='Hello there! Configuration successful, starting in a few seconds...\nFor help on setting up this system, {}.'.format('unplug and connect the USB cable to a PC' if isSelfMount else 'pull out the USB stick at any time')
+        if lang == 'nl':
+            message='Hallo! De configuratie is in orde, de normale werking start over enkele seconden...\n{} wanneer je de configuratie wil aanpassen.'.format('Verbind dit toestel met een PC' if isSelfMount else 'Trek de USB-stick eender wanneer uit dit toestel')
+        else:
+            message='Hello there! Configuration successful, starting in a few seconds...\nFor help on setting up this system, {}.'.format('unplug and connect the USB cable to a PC' if isSelfMount else 'pull out the USB stick at any time')
         label = Label(self.root, text=message, fg='green', bg='black', font=('Helvetica', int(round(swidth/48.0))), justify=LEFT)
         label.pack(side='top', fill='both', expand='yes')
         
     def showError(self, message):
         self.clear()
         swidth = self.root.winfo_screenwidth()
-        label = Label(self.root, text=message, fg='red', bg='black', font=('Helvetica', int(round(swidth/96.0))), justify=LEFT)
+		if lang == 'nl':
+            footer='{} wanneer je de configuratie wil aanpassen.'.format('Verbind dit toestel met een PC' if isSelfMount else 'Trek de USB-stick eender wanneer uit dit toestel')
+        else:
+            footer='For help on setting up this system, {}.'.format('unplug and connect the USB cable to a PC' if isSelfMount else 'pull out the USB stick at any time')
+        label = Label(self.root, text='{}\n\n{}'.format(message, footer), fg='red', bg='black', font=('Helvetica', int(round(swidth/96.0))), justify=LEFT)
         label.pack(side='top', fill='both', expand='yes')
 
     def showImage(self, fileName):
@@ -106,7 +114,7 @@ class Gui:
             image = readImage(os.path.join(baseLocation, fileName))
             photoImage = ImageTk.PhotoImage(image)
         except Exception, e:
-            self.showError("Error showing image '{}':\n{}".format(fileName, str(e)))
+            self.showError("{} '{}':\n{}".format('Er trad een fout op bij het tonen van afbeelding' if lang == 'nl' else 'Error showing image', fileName, str(e)))
             return
         if not self.imageLabel:
             self.clear()
@@ -135,7 +143,7 @@ class Gui:
         self.videoFileName = None
         self.videoPlayer = None
         if exitCode != 0:
-            self.showError("Error showing video '{}'".format(fileName))
+            self.showError("{} '{}'".format('Er trad een fout op bij het tonen van video' if lang == 'nl' else 'Error showing video', fileName))
             return False
         return True
         
@@ -150,11 +158,47 @@ class Gui:
     def showHelpWithTagUid(self, tagUid):
         if not self.helpTagLabel:
             self.clear()
-            helpText = """This is a presentation system showing a video or an image when the associated RFID tag is presented.
+            if lang == 'nl':
+                helpText = """Dit is een presentatiesysteem dat een video of afbeelding toont wanneer je de bijpassende RFID-tag aanbiedt.
+Dit systeem werd oorspronkelijk ontwikkeld voor O Lab Overbeke, Habbekrats Wetteren and faro.be
+door Michiel De Wilde <michiel.dewilde@gmail.com>.
+
+{} dat '{}' heet.
+Binnenin dat bestand koppelt elke tekstlijn een RFID-tag met een video of afbeelding.
+
+Gebruik de volgende syntax:
+    id=<ID van de RFID-tag>:file=<bestandsnaam>
+
+Dit systeem accepteert ISO 14443A 'MIFARE'-tags met een identificatiecode van 4 bytes.
+Als je nu een RFID-tag aanbiedt, wordt de identificatiecode onder deze boodschap getoond.
+Gebruik 'id=none' om in te stellen wat er gebeurt in rust.
+Gebruik 'id=unknown' om in te stellen wat er gebeurt bij een niet geregistreerde tag.
+
+Ondersteunde formaten zijn avi/flv/mov/mpg/mp4/mkv/m4v (video's) en bmp/gif/jpg/png (afbeeldingen).
+
+Je kan nog extra velden 'min', 'lost' and 'max' toevoegen:
+    - min: minimale duurtijd
+    - lost: duurtijd na het verwijderen van de tag
+    - max: maximale duurtijd
+Geldige waarden zijn:
+    - een tijd in seconden (bijvoorbeeld '1.5')
+    - 'end' om te wachten tot het einde van de video (standaard)
+    - 'forever' om de video te laten herhalen
+
+Voorbeeld:
+    id=F354422ACF:min=end:lost=end:max=forever:file=mijnvideo.mp4
+
+""".format('Dit toestel is nu een schijf op je PC. Maak een tekstbestand aan' if isSelfMount else 'Steek een USB-stick in met een tekstbestand', configName)
+				if isSelfMount:
+					helpText += 'Deze boodschap wordt getoond omdat dit toestel met een PC verbonden is.\nDe normale werking herneemt nadat je dit toestel met een netvoeding verbindt.'
+				else:
+					helpText += "Deze boodschap wordt getoond omdat het bestand '{}' (of de gehele USB-stick) ontbreekt.\nDe normale werking herneemt onmiddellijk nadat je een geconfigureerde stick insteekt.\n".format(configName)
+            else:
+                helpText = """This is a presentation system showing a video or an image when the associated RFID tag is presented.
 This system was originally developed for O Lab Overbeke, Habbekrats Wetteren and faro.be
 by Michiel De Wilde <michiel.dewilde@gmail.com>.
 
-{} a file named '{}'.
+{} a text file named '{}'.
 In that file, each line needs to associate an RFID tag with a video or image file.
 
 Use the following syntax:
@@ -172,7 +216,7 @@ You can add extra fields 'min', 'lost' and 'max':
     - lost: duration after tag removal
     - max: maximal duration
 Valid values are:
-    - a time in seconds (e.g; '1.5')
+    - a time in seconds (e.g., '1.5')
     - 'end' to wait until the end of the video (default)
     - 'forever' to loop the video
 
@@ -180,10 +224,10 @@ Example:
     id=F354422ACF:min=end:lost=end:max=forever:file=myvideo.mp4
 
 """.format('This device is a USB drive on your PC. Create' if isSelfMount else 'Insert a USB stick with', configName)
-            if isSelfMount:
-                helpText += 'This message is shown because this device is connected to a PC.\nNormal functionality is resumed after you connect this device to a dumb power supply.'
-            else:
-                helpText += "This message is shown because the '{}' file (or the entire USB stick) is missing.\nNormal functionality is resumed immediately after inserting a configured stick.\n".format(configName)
+				if isSelfMount:
+					helpText += 'This message is shown because this device is connected to a PC.\nNormal functionality is resumed after you connect this device to a dumb power supply.'
+				else:
+					helpText += "This message is shown because the '{}' file (or the entire USB stick) is missing.\nNormal functionality is resumed immediately after inserting a configured stick.\n".format(configName)
             swidth = self.root.winfo_screenwidth()
             label = Label(self.root, text=helpText, fg='white', bg='black', font=('Helvetica', int(round(swidth/120.0))), justify=LEFT)
             label.pack(side='top', fill='both', expand='yes')
@@ -381,7 +425,7 @@ class Main:
                 try:
                     self.config = readConfig()
                 except Exception, e:
-                    gui.showError("Error reading configuration:\n{}".format(str(e)))
+                    gui.showError('{}:\n{}'.format('Er trad een fout op bij het lezen van de configuratie' if lang == 'nl' else 'Error reading configuration', str(e)))
                     self.config = 'bad'
         else:
             if self.config is not None:
