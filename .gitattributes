@@ -1,0 +1,9 @@
+*              -text
+*.md           text
+*.sh           text eol=lf
+*.svg          text eol=lf
+*.txt          text
+*.py           text diff=python
+.gitattributes text
+.gitignore     text
+LICENSE        text
