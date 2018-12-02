@@ -93,7 +93,7 @@ class Gui:
         self.clear()
         swidth = self.root.winfo_screenwidth()
         if lang == 'nl':
-            message='Hallo! De configuratie is in orde, de normale werking start over enkele seconden...\n{} wanneer je de configuratie wil aanpassen.'.format('Verbind dit toestel met een PC' if isSelfMount else 'Trek de USB-stick eender wanneer uit dit toestel')
+            message='Hallo! De configuratie is in orde,\nde normale werking start over enkele seconden...\n{}\n wanneer je de configuratie wil aanpassen.'.format('Verbind dit toestel met een PC' if isSelfMount else 'Trek de USB-stick eender wanneer uit dit toestel')
         else:
             message='Hello there! Configuration successful, starting in a few seconds...\nFor help on setting up this system, {}.'.format('unplug and connect the USB cable to a PC' if isSelfMount else 'pull out the USB stick at any time')
         label = Label(self.root, text=message, fg='green', bg='black', font=('Helvetica', int(round(swidth/48.0))), justify=LEFT)
@@ -102,7 +102,7 @@ class Gui:
     def showError(self, message):
         self.clear()
         swidth = self.root.winfo_screenwidth()
-		if lang == 'nl':
+        if lang == 'nl':
             footer='{} wanneer je de configuratie wil aanpassen.'.format('Verbind dit toestel met een PC' if isSelfMount else 'Trek de USB-stick eender wanneer uit dit toestel')
         else:
             footer='For help on setting up this system, {}.'.format('unplug and connect the USB cable to a PC' if isSelfMount else 'pull out the USB stick at any time')
@@ -160,7 +160,7 @@ class Gui:
             self.clear()
             if lang == 'nl':
                 helpText = """Dit is een presentatiesysteem dat een video of afbeelding toont wanneer je de bijpassende RFID-tag aanbiedt.
-Dit systeem werd oorspronkelijk ontwikkeld voor O Lab Overbeke, Habbekrats Wetteren and faro.be
+Dit systeem werd oorspronkelijk ontwikkeld voor O Lab Overbeke, Habbekrats Wetteren - De Loft en FARO
 door Michiel De Wilde <michiel.dewilde@gmail.com>.
 
 {} dat '{}' heet.
@@ -189,13 +189,13 @@ Voorbeeld:
     id=F354422ACF:min=end:lost=end:max=forever:file=mijnvideo.mp4
 
 """.format('Dit toestel is nu een schijf op je PC. Maak een tekstbestand aan' if isSelfMount else 'Steek een USB-stick in met een tekstbestand', configName)
-				if isSelfMount:
-					helpText += 'Deze boodschap wordt getoond omdat dit toestel met een PC verbonden is.\nDe normale werking herneemt nadat je dit toestel met een netvoeding verbindt.'
-				else:
-					helpText += "Deze boodschap wordt getoond omdat het bestand '{}' (of de gehele USB-stick) ontbreekt.\nDe normale werking herneemt onmiddellijk nadat je een geconfigureerde stick insteekt.\n".format(configName)
+                if isSelfMount:
+                    helpText += 'Deze boodschap wordt getoond omdat dit toestel met een PC verbonden is.\nDe normale werking herneemt nadat je dit toestel met een netvoeding verbindt.'
+                else:
+                    helpText += "Deze boodschap wordt getoond omdat het bestand '{}' (of de gehele USB-stick) ontbreekt.\nDe normale werking herneemt onmiddellijk nadat je een geconfigureerde stick insteekt.\n".format(configName)
             else:
-                helpText = """This is a presentation system showing a video or an image when the associated RFID tag is presented.
-This system was originally developed for O Lab Overbeke, Habbekrats Wetteren and faro.be
+                helpText = """\nThis is a presentation system showing a video or an image when the associated RFID tag is presented.
+This system was originally developed for O Lab Overbeke, Habbekrats Wetteren - De Loft and FARO
 by Michiel De Wilde <michiel.dewilde@gmail.com>.
 
 {} a text file named '{}'.
@@ -224,10 +224,10 @@ Example:
     id=F354422ACF:min=end:lost=end:max=forever:file=myvideo.mp4
 
 """.format('This device is a USB drive on your PC. Create' if isSelfMount else 'Insert a USB stick with', configName)
-				if isSelfMount:
-					helpText += 'This message is shown because this device is connected to a PC.\nNormal functionality is resumed after you connect this device to a dumb power supply.'
-				else:
-					helpText += "This message is shown because the '{}' file (or the entire USB stick) is missing.\nNormal functionality is resumed immediately after inserting a configured stick.\n".format(configName)
+                if isSelfMount:
+                    helpText += 'This message is shown because this device is connected to a PC.\nNormal functionality is resumed after you connect this device to a dumb power supply.'
+                else:
+                    helpText += "This message is shown because the '{}' file (or the entire USB stick) is missing.\nNormal functionality is resumed immediately after inserting a configured stick.\n".format(configName)
             swidth = self.root.winfo_screenwidth()
             label = Label(self.root, text=helpText, fg='white', bg='black', font=('Helvetica', int(round(swidth/120.0))), justify=LEFT)
             label.pack(side='top', fill='both', expand='yes')
