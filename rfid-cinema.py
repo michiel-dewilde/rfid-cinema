@@ -13,9 +13,18 @@ isSelfMount = os.path.exists(selfMountPath)
 baseLocation = selfMountPath if isSelfMount else '/media/usb0'
 configName = 'config.txt'
 configLocation = os.path.join(baseLocation, configName)
-lang = 'en'
+lang = 'nl'
+
+INITIAL = 0
+NO_USB_SELF_MOUNTED_OPERATIONAL = 1
+NO_USB_SELF_MOUNT_FAILED = 2
+USB_DISK_PROVIDER = 3
+USB_EJECTED_SELF_MOUNTED_OPERATIONAL = 4
+USB_EJECTED_SELF_MOUNT_FAILED = 5
 
 def createP3IfMissing():
+    if os.path.exists('/dev/mmcblk0p3'):
+        return
     subprocess.check_call(['/usr/bin/sudo', '/sbin/partprobe', '/dev/mmcblk0'])
     if os.path.exists('/dev/mmcblk0p3'):
         return
@@ -39,11 +48,11 @@ def createP3IfMissing():
         raise Exception('sfdisk failed')
     subprocess.check_call(['/usr/bin/sudo', '/sbin/partprobe', '/dev/loop0'])
     subprocess.check_call(['/usr/bin/sudo', '/sbin/mkfs.vfat', '/dev/loop0p1'], stdout=devnull)
-    subprocess.check_call(['/bin/mount','/dev/loop0p1',selfMountPath])
+    subprocess.check_call(['/usr/bin/sudo', '/bin/mount', '-o', 'uid=1000,gid=1000', '/dev/loop0p1', selfMountPath])
     shutil.copyfile(os.path.join(os.path.dirname(os.path.abspath(__file__)),'welcome-{}.png'.format(lang)),os.path.join(selfMountPath,'welcome.png'))
     with open(os.path.join(selfMountPath,'config.txt'),'w') as f:
         f.write('id=none:file=welcome.png\n')
-    subprocess.check_call(['/bin/umount',selfMountPath])
+    subprocess.check_call(['/usr/bin/sudo', '/bin/umount', selfMountPath])
     subprocess.check_call(['/usr/bin/sudo', '/sbin/losetup', '-d', '/dev/loop0'])    
 
 class TagUidReader:
@@ -362,6 +371,7 @@ class Main:
     def __init__(self):
         if isSelfMount:
             createP3IfMissing()
+            self.state = INITIAL
         self.config = None
         self.isFirstPoll = True
         self.tagPoller = TagPoller()
@@ -452,21 +462,24 @@ class Main:
         configHasChanged = self.isFirstPoll
         self.isFirstPoll = False
 
-        if os.path.isfile(configLocation):
-            if self.config is None:
-                configHasChanged = True
-                try:
-                    self.config = readConfig()
-                except Exception, e:
-                    gui.showError('{}:\n{}'.format('Er trad een fout op bij het lezen van de configuratie' if lang == 'nl' else 'Error reading configuration', str(e)))
-                    self.config = 'bad'
+        if isSelfMount:
+            pass
         else:
-            if self.config is not None:
-                configHasChanged = True
-                self.config = None
-
-        tagUid, tagHasChanged = self.tagPoller.pollTagUidAndHasChanged()
-        videoDoneNow = gui.updateVideoPollDoneNow()
+            if os.path.isfile(configLocation):
+                if self.config is None:
+                    configHasChanged = True
+                    try:
+                        self.config = readConfig()
+                    except Exception, e:
+                        gui.showError('{}:\n{}'.format('Er trad een fout op bij het lezen van de configuratie' if lang == 'nl' else 'Error reading configuration', str(e)))
+                        self.config = 'bad'
+            else:
+                if self.config is not None:
+                    configHasChanged = True
+                    self.config = None
+    
+            tagUid, tagHasChanged = self.tagPoller.pollTagUidAndHasChanged()
+            videoDoneNow = gui.updateVideoPollDoneNow()
 
         if configHasChanged:
             self.initRule()
