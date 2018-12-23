@@ -55,6 +55,28 @@ def createP3IfMissing():
     subprocess.check_call(['/usr/bin/sudo', '/bin/umount', selfMountPath])
     subprocess.check_call(['/usr/bin/sudo', '/sbin/losetup', '-d', '/dev/loop0'])    
 
+def isUsbConfigured():
+    with open('/sys/class/udc/20980000.usb/state', 'r') as f:
+        return f.read() == 'configured\n'
+
+def selfUnmount():
+    subprocess.check_call(['/usr/bin/sudo', '/bin/umount', selfMountPath])
+    
+def selfMount():
+    subprocess.check_call(['/usr/bin/sudo', '/sbin/losetup', '-P', '/dev/loop0', '/dev/mmcblk0p3'])
+    try:
+        subprocess.check_call(['/usr/bin/sudo', '/bin/mount', '-o', 'uid=1000,gid=1000', '/dev/loop0p1', selfMountPath])
+    finally:
+        subprocess.call(['/usr/bin/sudo', '/sbin/losetup', '-d', '/dev/loop0'])
+    
+def provideUsbDisk():
+    with open('/sys/devices/platform/soc/20980000.usb/gadget/lun0/file', 'w') as f:
+        f.write('/dev/mmcblk0p3\n')
+
+def isUsbDiskEjected():
+    with open('/sys/devices/platform/soc/20980000.usb/gadget/lun0/file', 'r') as f:
+        return len(f.read()) == 0
+
 class TagUidReader:
     def __init__(self):
         self.reader = MFRC522()
@@ -369,16 +391,23 @@ class TagPoller:
 
 class Main:
     def __init__(self):
-        if isSelfMount:
-            createP3IfMissing()
-            self.state = INITIAL
-        self.config = None
-        self.isFirstPoll = True
-        self.tagPoller = TagPoller()
-        self.initRule()
-        self.poll()
-        gui.root.mainloop()
-        GPIO.cleanup()
+        try:
+            if isSelfMount:
+                createP3IfMissing()
+                self.state = INITIAL
+            self.config = None
+            self.isFirstPoll = True
+            self.tagPoller = TagPoller()
+            self.initRule()
+            self.poll()
+            gui.root.mainloop()
+        finally:
+            if isSelfMount and (self.state == NO_USB_SELF_MOUNTED_OPERATIONAL or self.state == USB_EJECTED_SELF_MOUNTED_OPERATIONAL):
+                try:
+                    selfUnmount()
+                except:
+                    pass
+            GPIO.cleanup()
 
     def initRule(self):
         self.currentRule = None
@@ -454,7 +483,7 @@ class Main:
         self.updateTagLostSince(tagUid, now)
         self.processCurrentRule(tagUid, now, videoDoneNow)
         self.processNewRule(tagUid, now)
-        
+    
     def poll(self):
         global config
         gui.root.after(50, self.poll)
@@ -463,7 +492,34 @@ class Main:
         self.isFirstPoll = False
 
         if isSelfMount:
-            pass
+            if isUsbConfigured() and self.state != USB_EJECTED_SELF_MOUNTED_OPERATIONAL and self.state != USB_EJECTED_SELF_MOUNT_FAILED:
+                if self.state == NO_USB_SELF_MOUNTED_OPERATIONAL:
+                    gui.clear()
+                    selfUnmount()
+                provideUsbDisk()
+                self.state = USB_DISK_PROVIDER
+                if self.config is not None:
+                    configHasChanged = True
+                    self.config = None
+            elif self.state == INITIAL or (self.state == USB_DISK_PROVIDER and isUsbDiskEjected()):
+                configHasChanged = True
+                try:
+                    selfMount()
+                except Exception, e:
+                    self.state = NO_USB_SELF_MOUNT_FAILED if self.state == INITIAL else USB_EJECTED_SELF_MOUNT_FAILED
+                    gui.showError('{}:\n{}'.format('Er trad een fout op bij het lezen van het volume' if lang == 'nl' else 'Error mounting volume', str(e)))
+                    self.config = 'bad'
+                else:
+                    self.state = NO_USB_SELF_MOUNTED_OPERATIONAL if self.state == INITIAL else USB_EJECTED_SELF_MOUNTED_OPERATIONAL
+                    if not os.path.isfile(configLocation):
+                        gui.showError("Het configuratiebestand '{}' ontbreekt.".format(configName) if lang == 'nl' else "Missing configuration file '{}'.".format(configName))
+                        self.config = 'bad'
+                    else:
+                        try:
+                            self.config = readConfig()
+                        except Exception, e:
+                            gui.showError('{}:\n{}'.format('Er trad een fout op bij het lezen van de configuratie' if lang == 'nl' else 'Error reading configuration', str(e)))
+                            self.config = 'bad'
         else:
             if os.path.isfile(configLocation):
                 if self.config is None:
