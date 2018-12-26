@@ -50,8 +50,8 @@ def createP3IfMissing():
     subprocess.check_call(['/usr/bin/sudo', '/sbin/mkfs.vfat', '/dev/loop0p1'], stdout=devnull)
     subprocess.check_call(['/usr/bin/sudo', '/bin/mount', '-o', 'uid=1000,gid=1000', '/dev/loop0p1', selfMountPath])
     shutil.copyfile(os.path.join(os.path.dirname(os.path.abspath(__file__)),'welcome-{}.png'.format(lang)),os.path.join(selfMountPath,'welcome.png'))
-    with open(os.path.join(selfMountPath,'config.txt'),'w') as f:
-        f.write('id=none:file=welcome.png\n')
+    with open(os.path.join(selfMountPath,'config.txt'),'wb') as f:
+        f.write('id=none:id=unknown:file=welcome.png\r\n')
     subprocess.check_call(['/usr/bin/sudo', '/bin/umount', selfMountPath])
     subprocess.check_call(['/usr/bin/sudo', '/sbin/losetup', '-d', '/dev/loop0'])    
 
@@ -70,8 +70,7 @@ def selfMount():
         subprocess.call(['/usr/bin/sudo', '/sbin/losetup', '-d', '/dev/loop0'])
     
 def provideUsbDisk():
-    with open('/sys/devices/platform/soc/20980000.usb/gadget/lun0/file', 'w') as f:
-        f.write('/dev/mmcblk0p3\n')
+    subprocess.check_call(['sudo','/bin/sh','-c','echo /dev/mmcblk0p3 > /sys/devices/platform/soc/20980000.usb/gadget/lun0/file'])
 
 def isUsbDiskEjected():
     with open('/sys/devices/platform/soc/20980000.usb/gadget/lun0/file', 'r') as f:
@@ -155,7 +154,7 @@ class Gui:
         self.clear()
         swidth = self.root.winfo_screenwidth()
         if lang == 'nl':
-            message='Hallo! De configuratie is in orde,\nde normale werking start over enkele seconden...\n{}\n wanneer je de configuratie wil aanpassen.'.format('Verbind dit toestel met een PC' if isSelfMount else 'Trek de USB-stick eender wanneer uit dit toestel')
+            message='Hallo! De configuratie is in orde,\nde normale werking start over enkele seconden...\n{}\nwanneer je de configuratie wil aanpassen.'.format('Verbind dit toestel met een PC' if isSelfMount else 'Trek de USB-stick eender wanneer uit dit toestel')
         else:
             message='Hello there! Configuration successful, starting in a few seconds...\nFor help on setting up this system, {}.'.format('unplug and connect the USB cable to a PC' if isSelfMount else 'pull out the USB stick at any time')
         label = Label(self.root, text=message, fg='green', bg='black', font=('Helvetica', int(round(swidth/48.0))), justify=LEFT)
@@ -492,7 +491,7 @@ class Main:
         self.isFirstPoll = False
 
         if isSelfMount:
-            if isUsbConfigured() and self.state != USB_EJECTED_SELF_MOUNTED_OPERATIONAL and self.state != USB_EJECTED_SELF_MOUNT_FAILED:
+            if self.state < USB_DISK_PROVIDER and isUsbConfigured():
                 if self.state == NO_USB_SELF_MOUNTED_OPERATIONAL:
                     gui.clear()
                     selfUnmount()
@@ -533,9 +532,9 @@ class Main:
                 if self.config is not None:
                     configHasChanged = True
                     self.config = None
-    
-            tagUid, tagHasChanged = self.tagPoller.pollTagUidAndHasChanged()
-            videoDoneNow = gui.updateVideoPollDoneNow()
+        
+        tagUid, tagHasChanged = self.tagPoller.pollTagUidAndHasChanged()
+        videoDoneNow = gui.updateVideoPollDoneNow()
 
         if configHasChanged:
             self.initRule()
