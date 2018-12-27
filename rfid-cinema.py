@@ -65,12 +65,12 @@ def selfUnmount():
 def selfMount():
     subprocess.check_call(['/usr/bin/sudo', '/sbin/losetup', '-P', '/dev/loop0', '/dev/mmcblk0p3'])
     try:
-        subprocess.check_call(['/usr/bin/sudo', '/bin/mount', '-o', 'uid=1000,gid=1000', '/dev/loop0p1', selfMountPath])
+        subprocess.check_call(['/usr/bin/sudo', '/bin/mount', '-o', 'ro,uid=1000,gid=1000', '/dev/loop0p1', selfMountPath])
     finally:
         subprocess.call(['/usr/bin/sudo', '/sbin/losetup', '-d', '/dev/loop0'])
     
 def provideUsbDisk():
-    subprocess.check_call(['sudo','/bin/sh','-c','echo /dev/mmcblk0p3 > /sys/devices/platform/soc/20980000.usb/gadget/lun0/file'])
+    subprocess.check_call(['/usr/bin/sudo','/bin/sh','-c','echo /dev/mmcblk0p3 > /sys/devices/platform/soc/20980000.usb/gadget/lun0/file'])
 
 def isUsbDiskEjected():
     with open('/sys/devices/platform/soc/20980000.usb/gadget/lun0/file', 'r') as f:
