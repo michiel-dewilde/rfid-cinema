@@ -17,11 +17,23 @@
    id="svg6822"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
    sodipodi:docname="welcome.svg"
-   inkscape:export-filename="C:\Users\michi\Documents\rfid-cinema\rfid-cinema\welcome-nl.png"
+   inkscape:export-filename="C:\Users\michi\Documents\rfid-cinema\rfid-cinema\tag-nl.png"
    inkscape:export-xdpi="96"
-   inkscape:export-ydpi="96">
+   inkscape:export-ydpi="96"
+   enable-background="new">
   <defs
-     id="defs6816" />
+     id="defs6816">
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter68">
+      <feBlend
+         inkscape:collect="always"
+         mode="multiply"
+         in2="BackgroundImage"
+         id="feBlend70" />
+    </filter>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -30,16 +42,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.43310811"
-     inkscape:cx="942.80313"
+     inkscape:cx="558.37255"
      inkscape:cy="429.0091"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="layer5"
      showgrid="false"
      units="px"
      inkscape:window-width="1920"
-     inkscape:window-height="986"
-     inkscape:window-x="-11"
-     inkscape:window-y="-11"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
      inkscape:window-maximized="1" />
   <metadata
      id="metadata6819">
@@ -281,9 +293,85 @@
   </g>
   <g
      inkscape:groupmode="layer"
-     id="layer2"
-     inkscape:label="en"
+     id="layer4"
+     inkscape:label="nl-tag"
      style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.57777786px;line-height:1.25;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458335"
+       x="261.00043"
+       y="110.59267"
+       id="text10868-32"><tspan
+         sodipodi:role="line"
+         x="261.00043"
+         y="110.59267"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.57777786px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458335"
+         id="tspan10886-7">Tag gelezen!</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="nl-welcome"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;line-height:1.25;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458335"
+       x="117.25381"
+       y="74.080116"
+       id="text10868"><tspan
+         sodipodi:role="line"
+         id="tspan10866"
+         x="117.25381"
+         y="74.080116"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335">Deze videospeler bevat nog geen beelden.</tspan><tspan
+         sodipodi:role="line"
+         x="117.25381"
+         y="91.719009"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335"
+         id="tspan10876">Verbind hem met een computer</tspan><tspan
+         sodipodi:role="line"
+         x="117.25381"
+         y="109.35789"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335"
+         id="tspan10880">om er beelden op te plaatsen.</tspan><tspan
+         sodipodi:role="line"
+         x="117.25381"
+         y="126.99679"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335"
+         id="tspan10882" /><tspan
+         sodipodi:role="line"
+         x="117.25381"
+         y="144.63568"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335"
+         id="tspan10884">Tijdens die stap verschijnen er</tspan><tspan
+         sodipodi:role="line"
+         x="117.25381"
+         y="162.27457"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335"
+         id="tspan10886">gedetailleerde instructies op dit scherm.</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer5"
+     inkscape:label="en-tag"
+     style="display:none;filter:url(#filter68)">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.57777786px;line-height:1.25;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458335"
+       x="261.00043"
+       y="110.59267"
+       id="text10868-32-2"><tspan
+         sodipodi:role="line"
+         x="261.00043"
+         y="110.59267"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.57777786px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458335"
+         id="tspan10886-7-8">Tag read!</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="en-welcome"
+     style="display:inline">
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;line-height:1.25;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458335"
@@ -325,47 +413,5 @@
          y="172.48927"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335"
          id="tspan155">will be shown on this screen.</tspan></text>
-  </g>
-  <g
-     inkscape:groupmode="layer"
-     id="layer3"
-     inkscape:label="nl"
-     style="display:inline">
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;line-height:1.25;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458335"
-       x="117.25381"
-       y="74.080116"
-       id="text10868"><tspan
-         sodipodi:role="line"
-         id="tspan10866"
-         x="117.25381"
-         y="74.080116"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335">Deze videospeler bevat nog geen beelden.</tspan><tspan
-         sodipodi:role="line"
-         x="117.25381"
-         y="91.719009"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335"
-         id="tspan10876">Verbind hem met een computer</tspan><tspan
-         sodipodi:role="line"
-         x="117.25381"
-         y="109.35789"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335"
-         id="tspan10880">om er beelden op te plaatsen.</tspan><tspan
-         sodipodi:role="line"
-         x="117.25381"
-         y="126.99679"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335"
-         id="tspan10882" /><tspan
-         sodipodi:role="line"
-         x="117.25381"
-         y="144.63568"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335"
-         id="tspan10884">Tijdens die stap verschijnen er</tspan><tspan
-         sodipodi:role="line"
-         x="117.25381"
-         y="162.27457"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111164px;font-family:'Arial Rounded MT Bold';-inkscape-font-specification:'Arial Rounded MT Bold, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458335"
-         id="tspan10886">gedetailleerde instructies op dit scherm.</tspan></text>
   </g>
 </svg>
