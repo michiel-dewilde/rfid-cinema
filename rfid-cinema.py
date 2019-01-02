@@ -52,7 +52,7 @@ def createP3IfMissing():
     shutil.copyfile(os.path.join(os.path.dirname(os.path.abspath(__file__)),'welcome-{}.png'.format(lang)),os.path.join(selfMountPath,'welcome.png'))
     shutil.copyfile(os.path.join(os.path.dirname(os.path.abspath(__file__)),'tag-{}.png'.format(lang)),os.path.join(selfMountPath,'tag.png'))
     with open(os.path.join(selfMountPath,'config.txt'),'wb') as f:
-        f.write('id=none:file=welcome.png\r\nid=unknown:file=tag.png:lost=5\r\n')
+        f.write('id=none:file=welcome.png\r\nid=unknown:file=tag.png:min=3:lost=1\r\n')
     subprocess.check_call(['/usr/bin/sudo', '/bin/umount', selfMountPath])
     subprocess.check_call(['/usr/bin/sudo', '/sbin/losetup', '-d', '/dev/loop0'])    
 
