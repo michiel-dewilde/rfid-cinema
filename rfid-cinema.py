@@ -104,7 +104,7 @@ def isValidTagUid(tagUid):
         serNumCheck = serNumCheck ^ uidBytes[i]
     return serNumCheck == 0
 
-@cacheMaker.lrucache(maxsize=16)
+@cacheMaker.lrucache(maxsize=(8 if isSelfMount else 16))
 def readImage(path):
     image = Image.open(path)
     orientation = 1
